@@ -8,7 +8,7 @@ app.use(express.static("dist"));
 
 // Add version endpoint
 app.get('/version', (req, res) => {
-  res.send('1') // change this string to ensure a new version deployed
+  res.send('3') // change this string to ensure a new version deployed
 });
 
 app.listen(PORT, () => {
