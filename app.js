@@ -8,9 +8,14 @@ app.use(express.static("dist"));
 
 // Add version endpoint
 app.get('/version', (req, res) => {
-  res.send('3') // change this string to ensure a new version deployed
+  res.send('5')
 });
+
+app.get('/health', (req, res) => {
+  res.send('ok')
+})
 
 app.listen(PORT, () => {
   console.log(`server started on port ${PORT}`);
 });
+
