@@ -24,7 +24,27 @@ jobs:
         env:
           COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
         run: echo "$COMMIT_MESSAGES"
+  check_commit_messages:
+    runs-on: ubuntu-20.04
+    outputs:
+      skip_deployment: ${{ steps.check_commits.outputs.skip_deployment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for #skip in commit messages
+        id: check_commits
+        run: |
+          COMMITS=$(git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} --pretty=format:"%s")
+          if echo "$COMMITS" | grep -q "#skip"; then
+            echo "skip_deployment=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_deployment=false" >> $GITHUB_OUTPUT
+          fi
+
   simple_deployment_pipeline:
+    needs: check_commit_messages
+    if: needs.check_commit_messages.outputs.skip_deployment != 'true'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +61,8 @@ jobs:
         run: npm run build
 
   version:
-    needs: [simple_deployment_pipeline]
-    if: github.event.pull_request.merged == true
+    needs: [simple_deployment_pipeline, check_commit_messages]
+    if: github.event.pull_request.merged == true && needs.check_commit_messages.outputs.skip_deployment != 'true'
     runs-on: ubuntu-22.04
     permissions:
       contents: write
